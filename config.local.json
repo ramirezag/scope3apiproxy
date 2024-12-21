@@ -1,0 +1,11 @@
+{
+  "port": 8080,
+  "gracefulShutdownTimeoutInSeconds": 3,
+  "scope3": {
+    "host": "https://api.scope3.com",
+    "apiKey": "set me through env var SCOPE3_APIKEY",
+    "timeoutInSeconds": 10,
+    "maxIdleConnections": 10,
+    "idleConnTimeoutInSeconds": 30
+  }
+}
