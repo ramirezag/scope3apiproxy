@@ -31,7 +31,7 @@ func main() {
 	} else {
 		logger, err = zap.NewDevelopment()
 	}
-	
+
 	if err != nil {
 		log.Fatalf("can't initialize zap logger: %v", err)
 	}
@@ -94,14 +94,4 @@ func initializeViper(logger *zap.Logger, environment string) {
 	replacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(replacer)
 	viper.AutomaticEnv()
-}
-
-func createScope3APIClient() *v2.Scope3APIClient {
-	return v2.NewScope3APIClient(v2.Scope3APIClientConfig{
-		Host:               viper.GetString("scope3.host"),
-		ApiKey:             viper.GetString("scope3.apiKey"),
-		Timeout:            time.Duration(viper.GetInt("scope3.timeoutInSeconds")) * time.Second,
-		MaxIdleConnections: viper.GetInt("scope3.maxIdleConnections"),
-		IdleConnTimeout:    time.Duration(viper.GetInt("scope3.idleConnTimeoutInSeconds")) * time.Second,
-	})
 }
