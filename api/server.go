@@ -5,8 +5,8 @@ import (
 	"errors"
 	"go.uber.org/zap"
 	"net/http"
-	v1 "scope3proxy/api/v1"
-	"scope3proxy/internal"
+	v1 "scope3apiproxy/api/v1"
+	"scope3apiproxy/internal"
 	"strconv"
 )
 

@@ -1,4 +1,4 @@
-module scope3proxy
+module scope3apiproxy
 
 go 1.23
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
-	"scope3proxy/internal"
+	"scope3apiproxy/internal"
 )
 
 const GenericClientError = "Something went wrong. Please try again later or contact scope3 team."

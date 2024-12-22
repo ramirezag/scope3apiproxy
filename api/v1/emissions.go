@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"scope3proxy/internal"
+	"scope3apiproxy/internal"
 )
 
 type emissionRequestBody struct {

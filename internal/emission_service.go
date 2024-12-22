@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"go.uber.org/zap"
-	"scope3proxy/internal/cache"
-	v2 "scope3proxy/internal/scope3/v2"
+	"scope3apiproxy/internal/cache"
+	v2 "scope3apiproxy/internal/scope3/v2"
 	"time"
 )
 
