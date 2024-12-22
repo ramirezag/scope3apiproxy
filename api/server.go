@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	v1 "scope3proxy/api/v1"
-	v2 "scope3proxy/internal/scope3/v2"
+	"scope3proxy/internal"
 	"strconv"
 )
 
@@ -15,8 +15,8 @@ type APIServer struct {
 	logger *zap.Logger
 }
 
-func NewAPIServer(port int, scope3APIClient *v2.Scope3APIClient, logger *zap.Logger) *APIServer {
-	handler := v1.NewHandler(scope3APIClient, logger)
+func NewAPIServer(port int, logger *zap.Logger, emissionService *internal.EmissionService) *APIServer {
+	handler := v1.NewHandler(logger, emissionService)
 	srv := &http.Server{
 		Addr:    ":" + strconv.Itoa(port),
 		Handler: handler,

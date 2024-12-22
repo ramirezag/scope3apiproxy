@@ -4,14 +4,18 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	v2 "scope3proxy/internal/scope3/v2"
+	"scope3proxy/internal"
 )
+
+type MeasureRequestBody struct {
+	Rows []MeasureRequestBodyRow `json:"rows"`
+}
 
 type MeasureRequestBodyRow struct {
 	Country     string `json:"country,omitempty"`
 	Channel     string `json:"channel,omitempty"`
 	InventoryId string `json:"inventoryId" validate:"required"`
-	Impressions string `json:"impressions" validate:"required"`
+	Impressions int    `json:"impressions" validate:"required"`
 	UtcDatetime string `json:"utcDatetime" validate:"required"`
 	Priority    int    `json:"priority"`
 }
@@ -29,7 +33,7 @@ func (h *APIV1Handler) GetEmissionsBreakdown(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var requestBody v2.MeasureRequestBody
+	var requestBody MeasureRequestBody
 	err = json.Unmarshal(requestBodyInBytes, &requestBody)
 	if err != nil {
 		h.notOk(w, r, http.StatusBadRequest, "Invalid request body")
@@ -37,11 +41,23 @@ func (h *APIV1Handler) GetEmissionsBreakdown(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	emissionsBreakdownByInventoryId, err := h.scope3APIClient.GetEmissionsBreakdown(requestBody)
+	var filters []internal.EmissionFilter
+	for _, row := range requestBody.Rows {
+		filters = append(filters, internal.EmissionFilter{
+			Country:     row.Country,
+			Channel:     row.Channel,
+			InventoryId: row.InventoryId,
+			Impressions: row.Impressions,
+			UtcDatetime: row.UtcDatetime,
+			Priority:    row.Priority,
+		})
+	}
+
+	result, err := h.emissionService.GetEmissions(filters)
 	if err != nil {
-		h.notOk(w, r, http.StatusInternalServerError, GenericCustomerError)
+		h.notOk(w, r, http.StatusInternalServerError, GenericClientError)
 		h.logAppError("Unable to fetch emissions breakdown", r, &requestBodyInBytes, err)
 		return
 	}
-	h.ok(w, r, emissionsBreakdownByInventoryId)
+	h.ok(w, r, result)
 }

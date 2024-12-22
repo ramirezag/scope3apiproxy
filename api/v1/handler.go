@@ -4,22 +4,22 @@ import (
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
-	v2 "scope3proxy/internal/scope3/v2"
+	"scope3proxy/internal"
 )
 
-const GenericCustomerError = "Something went wrong. Please try again later or contact scope3 team."
+const GenericClientError = "Something went wrong. Please try again later or contact scope3 team."
 const GenericLogUnsentResponseError = "Unable to send the response payload to customers"
 const LoggerKeyRequestMethod = "requestMethod"
 const LoggerKeyRequestUrl = "requestUrl"
 
 type APIV1Handler struct {
-	scope3APIClient *v2.Scope3APIClient
 	logger          *zap.Logger
+	emissionService *internal.EmissionService
 	*http.ServeMux
 }
 
-func NewHandler(scope3APIClient *v2.Scope3APIClient, logger *zap.Logger) http.Handler {
-	handler := &APIV1Handler{scope3APIClient, logger, http.NewServeMux()}
+func NewHandler(logger *zap.Logger, emissionService *internal.EmissionService) http.Handler {
+	handler := &APIV1Handler{logger, emissionService, http.NewServeMux()}
 	handler.HandleFunc("/api/v1/emissions", handler.GetEmissionsBreakdown)
 	return handler
 }

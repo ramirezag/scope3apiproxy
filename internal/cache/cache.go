@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Item struct {
+type Record struct {
 	Key       string
 	Value     interface{}
 	Priority  int
@@ -17,19 +17,19 @@ type Item struct {
 
 type Cache struct {
 	Capacity int
-	Items    map[string]*Item
+	Record   map[string]*Record
 	Heap     *PriorityQueue
 	Mutex    sync.Mutex
 }
 
-type PriorityQueue []*Item
+type PriorityQueue []*Record
 
 func NewCache(capacity int) *Cache {
 	pq := &PriorityQueue{}
 	heap.Init(pq)
 	return &Cache{
 		Capacity: capacity,
-		Items:    make(map[string]*Item),
+		Record:   make(map[string]*Record),
 		Heap:     pq,
 	}
 }
@@ -38,35 +38,35 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 	c.Mutex.Lock()
 	defer c.Mutex.Unlock()
 
-	item, exists := c.Items[key]
+	record, exists := c.Record[key]
 	if !exists {
 		return nil, false
 	}
 
-	if time.Now().After(item.TTL) {
+	if time.Now().After(record.TTL) {
 		c.evict(key)
 		return nil, false
 	}
 
-	item.Frequency++
-	heap.Fix(c.Heap, item.Index)
-	return item.Value, true
+	record.Frequency++
+	heap.Fix(c.Heap, record.Index)
+	return record.Value, true
 }
 
 func (c *Cache) Set(key string, value interface{}, priority int, ttl time.Duration) {
 	c.Mutex.Lock()
 	defer c.Mutex.Unlock()
 
-	if item, exists := c.Items[key]; exists {
-		// Update existing item.
-		item.Value = value
-		item.Priority = priority
-		item.TTL = time.Now().Add(ttl)
-		item.Frequency++
-		heap.Fix(c.Heap, item.Index)
+	if record, exists := c.Record[key]; exists {
+		// Update existing record.
+		record.Value = value
+		record.Priority = priority
+		record.TTL = time.Now().Add(ttl)
+		record.Frequency++
+		heap.Fix(c.Heap, record.Index)
 	} else {
-		// Add new item.
-		item = &Item{
+		// Add new record.
+		record = &Record{
 			Key:       key,
 			Value:     value,
 			Priority:  priority,
@@ -74,27 +74,35 @@ func (c *Cache) Set(key string, value interface{}, priority int, ttl time.Durati
 			TTL:       time.Now().Add(ttl),
 		}
 		c.evictIfNeeded()
-		heap.Push(c.Heap, item)
-		c.Items[key] = item
+		heap.Push(c.Heap, record)
+		c.Record[key] = record
 	}
 }
 
+func (c *Cache) Evict(key string) {
+	c.Mutex.Lock()
+	defer c.Mutex.Unlock()
+	record := c.Record[key]
+	heap.Remove(c.Heap, record.Index)
+	delete(c.Record, key)
+}
+
 func (c *Cache) evictIfNeeded() {
-	for len(c.Items) > c.Capacity {
-		item := heap.Pop(c.Heap).(*Item)
-		delete(c.Items, item.Key)
+	for len(c.Record) > c.Capacity {
+		record := heap.Pop(c.Heap).(*Record)
+		delete(c.Record, record.Key)
 	}
 }
 
 func (c *Cache) evict(key string) {
-	item := c.Items[key]
-	heap.Remove(c.Heap, item.Index)
-	delete(c.Items, key)
+	record := c.Record[key]
+	heap.Remove(c.Heap, record.Index)
+	delete(c.Record, key)
 }
 
 func (pq *PriorityQueue) Len() int { return len(*pq) }
 
-// Less compare cache item at index i against item at index j by checking the following in order
+// Less compare cache record at index i against record at index j by checking the following in order
 // 1. Priority
 // 2. Frequency (Least Frequently Used)
 // 3. TTL
@@ -119,16 +127,16 @@ func (pq *PriorityQueue) Swap(i, j int) {
 
 func (pq *PriorityQueue) Push(x interface{}) {
 	n := len(*pq)
-	item := x.(*Item)
-	item.Index = n
-	*pq = append(*pq, item)
+	record := x.(*Record)
+	record.Index = n
+	*pq = append(*pq, record)
 }
 
 func (pq *PriorityQueue) Pop() interface{} {
 	old := *pq
 	n := len(old)
-	item := old[n-1]
-	item.Index = -1 // for safety
+	record := old[n-1]
+	record.Index = -1 // for safety
 	*pq = old[0 : n-1]
-	return item
+	return record
 }

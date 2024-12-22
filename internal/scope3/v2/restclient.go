@@ -2,6 +2,7 @@ package v2
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -40,6 +41,18 @@ func NewScope3APIClient(config Scope3APIClientConfig) *Scope3APIClient {
 		baseUrl:    baseUrl,
 		apiKey:     config.ApiKey,
 	}
+}
+
+type Scope3ServerError struct {
+	Message string
+	Err     error
+}
+
+func (e Scope3ServerError) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("Scope3 server error: %s, caused by: %v", e.Message, e.Err)
+	}
+	return fmt.Sprintf("Scope3 server error: %s", e.Message)
 }
 
 func (s *Scope3APIClient) doPost(url string, requestBodyBytes []byte) (*http.Response, error) {

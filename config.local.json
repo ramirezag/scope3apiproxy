@@ -7,5 +7,9 @@
     "timeoutInSeconds": 10,
     "maxIdleConnections": 10,
     "idleConnTimeoutInSeconds": 30
+  },
+  "cache": {
+    "capacity": 1000,
+    "emissionTtlInMinutes": 60
   }
 }

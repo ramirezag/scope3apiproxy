@@ -8,17 +8,12 @@ import (
 	"strconv"
 )
 
-type MeasureRequestBody struct {
-	Rows []MeasureRequestBodyRow `json:"rows"`
-}
-
-type MeasureRequestBodyRow struct {
+type MeasureFilterRow struct {
 	Country     string `json:"country,omitempty"`
 	Channel     string `json:"channel,omitempty"`
 	InventoryId string `json:"inventoryId" validate:"required"`
 	Impressions int    `json:"impressions" validate:"required"`
 	UtcDatetime string `json:"utcDatetime" validate:"required"`
-	Priority    int    `json:"priority"`
 }
 
 type measureResponse struct {
@@ -26,12 +21,19 @@ type measureResponse struct {
 }
 
 type measureRow struct {
+	Error              scope3Error            `json:"error"` // scope3 sets
 	EmissionsBreakdown map[string]interface{} `json:"emissionsBreakdown"`
 	Internal           map[string]interface{} `json:"internal"`
 }
 
-func (s *Scope3APIClient) GetEmissionsBreakdown(requestBody MeasureRequestBody) (map[string]interface{}, error) {
-	requestBodyInBytes, err := json.Marshal(requestBody)
+type scope3Error struct {
+	Message string `json:"message"`
+}
+
+func (s *Scope3APIClient) GetEmissionsBreakdown(rows *[]MeasureFilterRow) (map[string]interface{}, error) {
+	requestBodyInBytes, err := json.Marshal(map[string]interface{}{
+		"rows": *rows,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshall request body: %w", err)
 	}
@@ -40,7 +42,11 @@ func (s *Scope3APIClient) GetEmissionsBreakdown(requestBody MeasureRequestBody) 
 
 	resp, err := s.doPost(url, requestBodyInBytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to call scope3 measure api: %w", err)
+		// Maybe server is unreachable
+		return nil, Scope3ServerError{
+			Message: "Failed to call scope3 measure api",
+			Err:     err,
+		}
 	}
 	responseBodyInBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -59,8 +65,12 @@ func (s *Scope3APIClient) GetEmissionsBreakdown(requestBody MeasureRequestBody) 
 
 	result := make(map[string]interface{}, len(responseBody.Rows))
 	for _, row := range responseBody.Rows {
-		propertyName := row.Internal["propertyName"].(string)
-		result[propertyName] = row.EmissionsBreakdown["breakdown"]
+		if row.Error.Message == "" {
+			propertyName := row.Internal["propertyName"].(string)
+			result[propertyName] = row.EmissionsBreakdown["breakdown"]
+		} else {
+			return nil, fmt.Errorf("scope3 server request error: %s", row.Error.Message)
+		}
 	}
 	return result, nil
 }

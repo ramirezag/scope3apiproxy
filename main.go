@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/signal"
 	"scope3proxy/api"
+	"scope3proxy/internal"
+	"scope3proxy/internal/cache"
 	v2 "scope3proxy/internal/scope3/v2"
 	"strings"
 	"syscall"
@@ -48,8 +50,17 @@ func main() {
 		IdleConnTimeout:    time.Duration(viper.GetInt("scope3.idleConnTimeoutInSeconds")) * time.Second,
 	})
 
-	server := api.NewAPIServer(viper.GetInt("port"), scope3APIClient, logger)
-	// Initializing the server in a goroutine so that it won't block the graceful shutdown handling below
+	appCache := cache.NewCache(viper.GetInt("cache.capacity"))
+
+	emissionService := internal.NewEmissionService(
+		logger,
+		scope3APIClient,
+		appCache,
+		time.Duration(viper.GetInt("cache.emissionTtlInMinutes"))*time.Minute,
+	)
+
+	server := api.NewAPIServer(viper.GetInt("port"), logger, emissionService)
+	// Rune the server in a goroutine so that it won't block the graceful shutdown handling below
 	go func() {
 		server.Run()
 	}()
