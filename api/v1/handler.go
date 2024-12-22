@@ -20,7 +20,7 @@ type APIV1Handler struct {
 
 func NewHandler(logger *zap.Logger, emissionService *internal.EmissionService) http.Handler {
 	handler := &APIV1Handler{logger, emissionService, http.NewServeMux()}
-	handler.HandleFunc("/api/v1/emissions", handler.GetEmissionsBreakdown)
+	handler.HandleFunc("/api/v1/emissions", handler.getEmissions)
 	return handler
 }
 

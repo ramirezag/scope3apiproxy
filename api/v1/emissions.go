@@ -7,11 +7,11 @@ import (
 	"scope3proxy/internal"
 )
 
-type MeasureRequestBody struct {
-	Rows []MeasureRequestBodyRow `json:"rows"`
+type emissionRequestBody struct {
+	Rows []EmissionRequestBodyRow `json:"rows"`
 }
 
-type MeasureRequestBodyRow struct {
+type EmissionRequestBodyRow struct {
 	Country     string `json:"country,omitempty"`
 	Channel     string `json:"channel,omitempty"`
 	InventoryId string `json:"inventoryId" validate:"required"`
@@ -20,7 +20,7 @@ type MeasureRequestBodyRow struct {
 	Priority    int    `json:"priority"`
 }
 
-func (h *APIV1Handler) GetEmissionsBreakdown(w http.ResponseWriter, r *http.Request) {
+func (h *APIV1Handler) getEmissions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		h.notOk(w, r, http.StatusMethodNotAllowed, "Only POST method is allowed")
 		return
@@ -33,7 +33,7 @@ func (h *APIV1Handler) GetEmissionsBreakdown(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var requestBody MeasureRequestBody
+	var requestBody emissionRequestBody
 	err = json.Unmarshal(requestBodyInBytes, &requestBody)
 	if err != nil {
 		h.notOk(w, r, http.StatusBadRequest, "Invalid request body")
