@@ -21,9 +21,10 @@ type measureResponse struct {
 }
 
 type measureRow struct {
-	Error              scope3Error            `json:"error"` // scope3 sets
-	EmissionsBreakdown map[string]interface{} `json:"emissionsBreakdown"`
-	Internal           map[string]interface{} `json:"internal"`
+	// scope3 returns HTTP 200 but set the error message for field validation issues (eg, missing or < 1 impressions)
+	Error              scope3Error            `json:"error,omitempty"`
+	EmissionsBreakdown map[string]interface{} `json:"emissionsBreakdown,omitempty"`
+	Internal           map[string]interface{} `json:"internal,omitempty"`
 }
 
 type scope3Error struct {
@@ -56,7 +57,6 @@ func (s *Scope3APIClient) GetEmissionsBreakdown(rows *[]MeasureFilterRow) (map[s
 		return nil, errors.New("scope3 server returns http status " + strconv.Itoa(resp.StatusCode) +
 			" with response body: " + string(responseBodyInBytes))
 	}
-
 	var responseBody measureResponse
 	err = json.Unmarshal(responseBodyInBytes, &responseBody)
 	if err != nil {
