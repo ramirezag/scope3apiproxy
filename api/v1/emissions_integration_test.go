@@ -274,6 +274,75 @@ func TestGetEmissions(t *testing.T) {
 		_, exists = appCache.Get("foxnews.com" + internal.EmissionCacheKeySuffix)
 		assert.False(t, exists, "foxnews.com should not be in cache")
 	})
+
+	t.Run("with priority over frequency", func(t *testing.T) {
+		propertiesQueriedFromScope3APIServer := make(map[string]bool)
+		scope3MockAPIServer := createMockHttpServerForEmissions(t, propertiesQueriedFromScope3APIServer)
+		defer scope3MockAPIServer.Close()
+
+		apiHandler, appCache := createTestApiHandler(scope3MockAPIServer.URL, 2)
+		handler := http.HandlerFunc(apiHandler.getEmissions)
+
+		requestBody := emissionRequestBody{
+			Rows: []EmissionRequestBodyRow{
+				{
+					InventoryId: "nytimes.com",
+					Impressions: 1000,
+					UtcDatetime: "2024-10-31",
+					Priority:    10,
+				},
+				{
+					InventoryId: "foxnews.com",
+					Impressions: 1000,
+					UtcDatetime: "2024-10-31",
+					Priority:    20,
+				},
+			},
+		}
+
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, createTestHttpRequest(t, requestBody))
+		verifyPerPropertyEmissionAppResponse(t, rr, "nytimes.com", "foxnews.com")
+		verifyScope3APIServerCalls(t, propertiesQueriedFromScope3APIServer, "nytimes.com", "foxnews.com")
+		verifyCache(t, appCache, "nytimes.com", "foxnews.com")
+
+		// Call again nytimes to increase frequency
+		clearPropertiesQueriedFromScope3APIServerMap(propertiesQueriedFromScope3APIServer)
+		rr = httptest.NewRecorder()
+		requestBody = emissionRequestBody{
+			Rows: []EmissionRequestBodyRow{
+				{
+					InventoryId: "nytimes.com",
+					Impressions: 1000,
+					UtcDatetime: "2024-10-31",
+					Priority:    10,
+				},
+			},
+		}
+		handler.ServeHTTP(rr, createTestHttpRequest(t, requestBody))
+		verifyPerPropertyEmissionAppResponse(t, rr, "nytimes.com")
+		verifyNoScope3APIServerCalls(t, propertiesQueriedFromScope3APIServer)
+		verifyCache(t, appCache, "nytimes.com", "foxnews.com")
+
+		clearPropertiesQueriedFromScope3APIServerMap(propertiesQueriedFromScope3APIServer)
+		rr = httptest.NewRecorder()
+		requestBody = emissionRequestBody{
+			Rows: []EmissionRequestBodyRow{
+				{
+					InventoryId: "usatoday.com",
+					Impressions: 1000,
+					UtcDatetime: "2024-10-31",
+					Priority:    15,
+				},
+			},
+		}
+		handler.ServeHTTP(rr, createTestHttpRequest(t, requestBody))
+		verifyPerPropertyEmissionAppResponse(t, rr, "usatoday.com")
+		verifyScope3APIServerCalls(t, propertiesQueriedFromScope3APIServer, "usatoday.com")
+		verifyCache(t, appCache, "usatoday.com", "foxnews.com")
+		_, exists := appCache.Get("nytimes.com" + internal.EmissionCacheKeySuffix)
+		assert.False(t, exists, "nytimes.com should not be in cache")
+	})
 }
 
 func clearPropertiesQueriedFromScope3APIServerMap(propertiesQueriedFromScope3APIServer map[string]bool) {
