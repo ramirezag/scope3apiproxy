@@ -102,7 +102,7 @@ func (c *Cache) evict(key string) {
 
 func (pq *PriorityQueue) Len() int { return len(*pq) }
 
-// Less compare cache record at index i against record at index j by checking the following in order
+// Less compare whether the element with index i must sort before the element with index j by checking the following in order
 // 1. Priority
 // 2. Frequency (Least Frequently Used)
 // 3. TTL
