@@ -88,7 +88,7 @@ func (c *Cache) Evict(key string) {
 }
 
 func (c *Cache) evictIfNeeded() {
-	for len(c.Record) > c.Capacity {
+	for len(c.Record) >= c.Capacity {
 		record := heap.Pop(c.Heap).(*Record)
 		delete(c.Record, record.Key)
 	}

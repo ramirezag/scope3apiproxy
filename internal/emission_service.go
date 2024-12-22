@@ -65,7 +65,7 @@ func (s *EmissionService) GetEmissions(filters []EmissionFilter) (*EmissionPerPr
 	}
 
 	if len(toFetchFromScope3) > 0 {
-		freshData, err := s.scope3APIClient.GetEmissionsBreakdown(&toFetchFromScope3)
+		freshData, err := s.scope3APIClient.GetEmissionsBreakdown(toFetchFromScope3)
 		if err != nil {
 			var serverError v2.Scope3ServerError
 			if errors.As(err, &serverError) {

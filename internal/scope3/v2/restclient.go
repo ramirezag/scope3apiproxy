@@ -24,7 +24,7 @@ type Scope3APIClientConfig struct {
 
 func NewScope3APIClient(config Scope3APIClientConfig) *Scope3APIClient {
 	baseUrl := config.Host
-	if !strings.HasPrefix(baseUrl, "https://") {
+	if !strings.HasPrefix(baseUrl, "http") {
 		baseUrl = "https://" + baseUrl
 	}
 	baseUrl += "/v2"

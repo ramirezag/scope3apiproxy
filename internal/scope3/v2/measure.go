@@ -31,9 +31,9 @@ type scope3Error struct {
 	Message string `json:"message"`
 }
 
-func (s *Scope3APIClient) GetEmissionsBreakdown(rows *[]MeasureFilterRow) (map[string]interface{}, error) {
+func (s *Scope3APIClient) GetEmissionsBreakdown(rows []MeasureFilterRow) (map[string]interface{}, error) {
 	requestBodyInBytes, err := json.Marshal(map[string]interface{}{
-		"rows": *rows,
+		"rows": rows,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshall request body: %w", err)
