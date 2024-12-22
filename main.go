@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -16,6 +17,9 @@ import (
 	"syscall"
 	"time"
 )
+
+//go:embed config.json
+var configFile []byte
 
 func main() {
 	log.Println("Scope3 API application starting...")
@@ -93,12 +97,13 @@ func main() {
 }
 
 func initializeViper(logger *zap.Logger, environment string) {
-	jsonConfigFile := "config." + environment + ".json"
+	jsonConfigFile := "config.json"
 	if _, err := os.Stat("config." + environment + ".json"); err == nil {
-		logger.Debug("Loading application config from " + jsonConfigFile)
-		viper.SetConfigFile(jsonConfigFile)
-		viper.SetConfigType("json")
+		jsonConfigFile = "config." + environment + ".json"
 	}
+	logger.Debug("Loading application config from " + jsonConfigFile)
+	viper.SetConfigFile(jsonConfigFile)
+	viper.SetConfigType("json")
 	if err := viper.ReadInConfig(); err != nil {
 		logger.Warn("Error application config from "+jsonConfigFile, zap.Error(err))
 	}

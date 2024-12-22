@@ -1,2 +1,4 @@
 .idea
 .DS_Store
+scope3apiproxy
+config.local.json
